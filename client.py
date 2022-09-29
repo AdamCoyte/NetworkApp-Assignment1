@@ -3,7 +3,7 @@ import socket
 import sys
 import os
 
-HEADER = 16
+HEADER = 1024
 # set port
 PORT = 5454     
 # get host IP address of server
@@ -29,23 +29,25 @@ def handle_response(conn, addr):
 
 
 def send_file(file, ip, port):
+    
     filesize = os.path.getsize(file)
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
-    f = open(file, 'rb')
+    
+    f = open(file, 'r')
     print("Sending. . .")
-    l = f.read(1024)
-    while(l):
-        client.send(l)
-        l = f.read(1024)
+
+    data = f.read()
+    client.send(file.encode(FORMAT))
+    msg = client.recv(HEADER).decode(FORMAT)
+    print(f"[SERVER]: {msg}")
     f.close()
-    print("Finished Sending")
     client.close()
 
-def main(argv):
-    ServerIP = argv[1]
-    ServerPort = argv[2]
-    filename = argv[3]
+def main():
+    ServerIP = SERVER #argv[1]
+    ServerPort = PORT #argv[2]
+    filename = "file.txt" #argv[3]
     send_file(filename, ServerIP, ServerPort)
 
-main(SERVER, PORT, "README")
+main()

@@ -1,10 +1,13 @@
+from ast import While
 from concurrent.futures import ThreadPoolExecutor
+from genericpath import isfile
 import socket
 from sqlite3 import connect
 import time
+import os
 
 # Header to send how long the message is
-HEADER = 16
+HEADER = 1024
 # set port
 PORT = 5454
 
@@ -26,15 +29,26 @@ def handle_client(conn, addr):
     connected = True
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DC_MESSAGE:
-                connected = False
-                
-            print(f"[{addr}] {msg}")
-
+        filename = conn.recv(HEADER).decode(FORMAT)
+        print(filename)
+        print("1")
+        print(f"[RECEIVED]: {filename}")
+        print(f"[{addr}] {filename}")
+        conn.send("Server handled {} requests, {} were successful".encode(FORMAT))
+        if os.path.isfile(filename):
+            conn.send("File Already Exists".encode(FORMAT))
+            connected = False
+        else:
+            conn.send("File {filename} [not] found at server.".encode(FORMAT))
+            file = open(filename, 'w') 
+            data = conn.recv(HEADER).decode(FORMAT)            
+            while data:        
+                file.write(data)
+                conn.send("File data received:".encode(FORMAT))
+                data.recv(HEADER).decode(FORMAT)
+            file.close()
+            connected = False
+    
             
         
 
