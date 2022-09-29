@@ -2,7 +2,7 @@ import socket
 import sys
 import os
 
-HEADER = 8
+HEADER = 16
 # set port
 PORT = 5454     
 # get host IP address of server
@@ -34,12 +34,14 @@ def send_file(file, ip, port):
     client.connect(ADDR)
     # open file
     f = open(file, 'rb')
+    client.send(file.encode(FORMAT))
+    client.recv(HEADER).decode(FORMAT)
     # read file and turn to string
     data = f.read(HEADER)
     while data:
         print("This is data")
         print(data)
-        client.send(file.encode(FORMAT))
+        client.send(data)
         data = f.read(HEADER)
    
     f.close()

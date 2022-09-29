@@ -6,7 +6,7 @@ import time
 import os
 
 # Header to send how long the message is
-HEADER = 8
+HEADER = 16
 # set port
 PORT = 5454
 
@@ -31,6 +31,7 @@ def handle_client(conn, addr):
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
         filename = conn.recv(HEADER).decode(FORMAT)
+        conn.send("received".encode(FORMAT))
         print(f"[{addr}] {filename}")
         totalRequests += 1 
         if os.path.isfile(filename):
@@ -39,7 +40,7 @@ def handle_client(conn, addr):
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
             file = open(filename, 'wb') 
-            data = conn.recv(HEADER).decode()
+            data = conn.recv(HEADER)
             print("This is data:")
             print(data)          
             while data:      
