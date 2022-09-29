@@ -25,7 +25,6 @@ def send_file(file, ip, port):
     fileData = client.recv(HEADER)
     while fileData:
         file.write(fileData)
-        print(fileData)
         fileData = client.recv(HEADER)
     print(f"[SERVER]: {msg}")
     file.close()

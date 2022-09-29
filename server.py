@@ -35,7 +35,6 @@ def handle_client(conn, addr):
     while connected:
 
     # wait for message from client, use HEADER and FORMAT for receiving the message
-        conn.send("[CONNECTED]".encode(FORMAT))
         print(f"REQ <{totalRequests}>: File {filename} requested from {addr}")
         REQUESTNO += 1 
         if os.path.isfile(filename):
@@ -50,15 +49,12 @@ def handle_client(conn, addr):
                 data = f.read(HEADER)
                 REQUESTSUCCESS += 1
                 successfullRequests += 1
-            f.close()
-           
-
+            f.close()   
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
             print(f"REQ <{totalRequests}>: [Not] Successful")
             print(f"REQ <{totalRequests}>File transfer complete")
             connected = False
-
         print(f"REQ <{totalRequests}>: Total successful requests so far = {successfullRequests}")
 
 
