@@ -13,45 +13,52 @@ PORT = 5454
 # get host IP address of server
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
+FORMAT = 'utf-8' 
 DC_MESSAGE = "!DISCONNECT"
+
 # create a socket instance, specify IPv4 and TCP
 # TCP is needed because send files require acknoledgements 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # bind the address to the socket
 server.bind(ADDR)
+REQUESTNO = 0
+REQUESTSUCCESS = 0
 
 
 def handle_client(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected")
-
     connected = True
-    totalRequests = 0
-    successfullRequests = 0
+    global REQUESTNO
+    global REQUESTSUCCESS
+    totalRequests = REQUESTNO
+    successfullRequests = REQUESTSUCCESS
     while connected:
+
     # wait for message from client, use HEADER and FORMAT for receiving the message
         filename = conn.recv(HEADER).decode(FORMAT)
         conn.send("received".encode(FORMAT))
-        print(f"[{addr}] {filename}")
-        totalRequests += 1 
+        print(f"REQ <{totalRequests}>: File {filename} requested from {addr}")
+        REQUESTNO += 1 
         if os.path.isfile(filename):
             conn.send("File Already Exists".encode(FORMAT))            
             connected = False
+            print(f"REQ <{totalRequests}>: [Not] Successful")
+
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
             file = open(filename, 'wb') 
-            data = conn.recv(HEADER)
-            print("This is data:")
-            print(data)          
+            data = conn.recv(HEADER)     
             while data:      
                 file.write(data)    
                 data = conn.recv(HEADER)
                 print(data)
             conn.send("File data received:".encode(FORMAT))
-            print(f"[RECEIVED]: {filename}")
+            print(f"REQ <{totalRequests}>File transfer complete")
             file.close()
             connected = False
+            REQUESTSUCCESS += 1
             successfullRequests += 1
+        print(f"REQ <{totalRequests}>: Total successful requests so far = {successfullRequests}")
+
 
             
         
@@ -68,12 +75,8 @@ def start():
         # start the handling of threads
         with ThreadPoolExecutor(max_workers=10) as executer:
             result = executer.submit(handle_client, conn, addr)
-        # thread = threading.Thread(target=handle_client, args=(conn, addr))
-        # thread.start()
 
-        # print amount of active connections (-1 because of this start thread)
         active_connection = "[ACTIVE CONNECTIONS:] {}"
-        print(result.result())
 
 print("[STARTING]... Server is Starting. Please Wait")
 print(SERVER)
