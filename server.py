@@ -31,37 +31,38 @@ def handle_client(conn, addr):
     global REQUESTSUCCESS
     totalRequests = REQUESTNO
     successfullRequests = REQUESTSUCCESS
+    filename = conn.recv(HEADER).decode(FORMAT)
     while connected:
 
     # wait for message from client, use HEADER and FORMAT for receiving the message
-        filename = conn.recv(HEADER).decode(FORMAT)
-        conn.send("received".encode(FORMAT))
+        conn.send("[CONNECTED]".encode(FORMAT))
         print(f"REQ <{totalRequests}>: File {filename} requested from {addr}")
         REQUESTNO += 1 
         if os.path.isfile(filename):
-            conn.send("File Already Exists".encode(FORMAT))            
-            connected = False
-            print(f"REQ <{totalRequests}>: [Not] Successful")
+            # open file
+            f = open(filename, 'rb')
+            # read file and turn to string
+            data = f.read(HEADER)
+            while data:
+                print("This is data")
+                print(data)
+                conn.send(data)
+                data = f.read(HEADER)
+                REQUESTSUCCESS += 1
+                successfullRequests += 1
+            f.close()
+           
 
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
-            file = open(filename, 'wb') 
-            data = conn.recv(HEADER)     
-            while data:      
-                file.write(data)    
-                data = conn.recv(HEADER)
-                print(data)
-            conn.send("File data received:".encode(FORMAT))
+            print(f"REQ <{totalRequests}>: [Not] Successful")
             print(f"REQ <{totalRequests}>File transfer complete")
-            file.close()
             connected = False
-            REQUESTSUCCESS += 1
-            successfullRequests += 1
+
         print(f"REQ <{totalRequests}>: Total successful requests so far = {successfullRequests}")
 
 
-            
-        
+
 
 
 def start():
