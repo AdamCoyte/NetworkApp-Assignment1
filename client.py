@@ -1,8 +1,10 @@
+from ast import arg
 import socket
 import sys
 import os
 
-HEADER = 16
+
+HEADER = 64
 # set port
 PORT = 5454     
 # get host IP address of server
@@ -48,10 +50,13 @@ def send_file(file, ip, port):
     msg = client.recv(HEADER).decode(FORMAT)
     print(f"[SERVER]: {msg}")
 
-def main():
-    ServerIP = SERVER #argv[1]
-    ServerPort = PORT #argv[2]
-    filename = "file.txt" #argv[3]
+def main(argv):
+    ServerIP =  argv[1]
+    # print(ServerIP)
+    ServerPort = argv[2]
+    # print(ServerPort)
+    filename = str(argv[3])
+    # print(filename)
     send_file(filename, ServerIP, ServerPort)
 
-main()
+main(sys.argv)

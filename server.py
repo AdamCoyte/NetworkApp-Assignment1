@@ -6,7 +6,7 @@ import time
 import os
 
 # Header to send how long the message is
-HEADER = 16
+HEADER = 64
 # set port
 PORT = 5454
 
