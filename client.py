@@ -19,17 +19,14 @@ def send_file(file, ip, port):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     client.send(file.encode(FORMAT))
-    file = open(file, 'wb')
-    msg = client.recv(HEADER)
-    print(msg)
+    filename = open(file, 'wb')
     fileData = client.recv(HEADER)
+    print(fileData)
     while fileData:
-        file.write(fileData)
+        filename.write(fileData)
         fileData = client.recv(HEADER)
-    print(f"[SERVER]: {msg}")
-    file.close()
-    client.send("File Transfer complete")
-    
+    filename.close()
+    client.close()
 def main(argv):
     ServerIP =  argv[1]
     # print(ServerIP)
