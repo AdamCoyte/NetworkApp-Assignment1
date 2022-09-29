@@ -6,7 +6,7 @@ import time
 # Header to send how long the message is
 HEADER = 16
 # set port
-PORT = 5050
+PORT = 5454
 
 # get host IP address of server
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -53,7 +53,8 @@ def start():
         thread.start()
 
         # print amount of active connections (-1 because of this start thread)
-        print(f"[ACTIVE CONNECTIONS:] {threading.activeCount() -1}")
+        active_connection = "[ACTIVE CONNECTIONS:] {}"
+        print(active_connection.format(threading.active_count() -1))
 
 print("[STARTING]... Server is Starting. Please Wait")
 print(SERVER)
