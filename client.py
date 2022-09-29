@@ -1,4 +1,5 @@
 from email.headerregistry import Address
+from pydoc import cli
 import socket
 import sys
 import os
@@ -33,16 +34,19 @@ def send_file(file, ip, port):
     filesize = os.path.getsize(file)
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
-    
-    f = open(file, 'r')
-    print("Sending. . .")
-
-    data = f.read()
-    client.send(file.encode(FORMAT))
+    # open file
+    f = open(file, 'rb')
+    # read file and turn to string
+    data = f.read(HEADER)
+    while data:
+        print("This is data")
+        print(data)
+        client.send(file.encode(FORMAT))
+        data = f.read(HEADER)
+   
+    f.close()
     msg = client.recv(HEADER).decode(FORMAT)
     print(f"[SERVER]: {msg}")
-    f.close()
-    client.close()
 
 def main():
     ServerIP = SERVER #argv[1]

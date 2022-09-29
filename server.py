@@ -27,28 +27,31 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected")
 
     connected = True
+    totalRequests = 0
+    successfullRequests = 0
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
         filename = conn.recv(HEADER).decode(FORMAT)
-        print(filename)
-        print("1")
-        print(f"[RECEIVED]: {filename}")
         print(f"[{addr}] {filename}")
-        conn.send("Server handled {} requests, {} were successful".encode(FORMAT))
+        totalRequests += 1 
         if os.path.isfile(filename):
-            conn.send("File Already Exists".encode(FORMAT))
+            conn.send("File Already Exists".encode(FORMAT))            
             connected = False
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
             file = open(filename, 'w') 
-            data = conn.recv(HEADER).decode(FORMAT)            
-            while data:        
-                file.write(data)
-                conn.send("File data received:".encode(FORMAT))
-                data.recv(HEADER).decode(FORMAT)
+            data = conn.recv(HEADER)
+            print("This is data:")
+            print(data)          
+            while data:      
+                file.write(data.decode())    
+                data = conn.recv(HEADER) 
+            conn.send("File data received:".encode(FORMAT))
+            print(f"[RECEIVED]: {filename}")
             file.close()
             connected = False
-    
+            successfullRequests += 1
+
             
         
 
@@ -62,8 +65,8 @@ def start():
         conn, addr = server.accept()
         
         # start the handling of threads
-        executer = ThreadPoolExecutor(max_workers=10)
-        result = executer.submit(handle_client, conn, addr)
+        with ThreadPoolExecutor(max_workers=10) as executer:
+            result = executer.submit(handle_client, conn, addr)
         # thread = threading.Thread(target=handle_client, args=(conn, addr))
         # thread.start()
 
