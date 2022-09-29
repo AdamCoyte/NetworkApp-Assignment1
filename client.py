@@ -1,10 +1,8 @@
-from email.headerregistry import Address
-from pydoc import cli
 import socket
 import sys
 import os
 
-HEADER = 1024
+HEADER = 8
 # set port
 PORT = 5454     
 # get host IP address of server

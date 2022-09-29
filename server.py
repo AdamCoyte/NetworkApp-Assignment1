@@ -1,4 +1,3 @@
-from ast import While
 from concurrent.futures import ThreadPoolExecutor
 from genericpath import isfile
 import socket
@@ -7,7 +6,7 @@ import time
 import os
 
 # Header to send how long the message is
-HEADER = 1024
+HEADER = 8
 # set port
 PORT = 5454
 
@@ -39,13 +38,14 @@ def handle_client(conn, addr):
             connected = False
         else:
             conn.send("File {filename} [not] found at server.".encode(FORMAT))
-            file = open(filename, 'w') 
-            data = conn.recv(HEADER)
+            file = open(filename, 'wb') 
+            data = conn.recv(HEADER).decode()
             print("This is data:")
             print(data)          
             while data:      
-                file.write(data.decode())    
-                data = conn.recv(HEADER) 
+                file.write(data)    
+                data = conn.recv(HEADER)
+                print(data)
             conn.send("File data received:".encode(FORMAT))
             print(f"[RECEIVED]: {filename}")
             file.close()
