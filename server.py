@@ -1,7 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor
 import socket
 from sqlite3 import connect
 import threading
 import time
+from multiprocessing import pool
 
 # Header to send how long the message is
 HEADER = 16
@@ -20,7 +22,6 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
- 
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected")
 
@@ -49,8 +50,10 @@ def start():
         conn, addr = server.accept()
         
         # start the handling of threads
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
+        executer = ThreadPoolExecutor(max_workers=10)
+        results = executer.submit(handle_client, conn,addr)
+        # thread = threading.Thread(target=handle_client, args=(conn, addr))
+        # thread.start()
 
         # print amount of active connections (-1 because of this start thread)
         active_connection = "[ACTIVE CONNECTIONS:] {}"
