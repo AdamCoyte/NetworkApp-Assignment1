@@ -26,9 +26,8 @@ def download_file(file, ip, port):
     ResponseCheck = str(RequestInfo)
     if "[not]" in ResponseCheck.split(" "):
         info = client.recv(HEADER)
-        print(info.decode(FORMAT))
-    
-    else:
+        print(info.decode(FORMAT))  
+    elif RequestInfo:
         filename = open(file, 'wb')          
         fileData = client.recv(HEADER)
         print(f"Downloading file {file}")
@@ -37,7 +36,9 @@ def download_file(file, ip, port):
             fileData = client.recv(HEADER)
         print("Download Complete")
         filename.close()
-        client.close()
+    else:
+        print("No Connection Found")
+    client.close()
     
 def main(argv):
     ServerIP =  argv[1]

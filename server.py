@@ -1,7 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
+from ctypes import resize
 from genericpath import isfile
 from itertools import count
 import multiprocessing
+from sqlite3 import connect
 from threading import Lock
 import socket
 import time
@@ -18,11 +20,7 @@ ADDR = (SERVER, PORT)
 FORMAT = 'utf-8' 
 DC_MESSAGE = "!DISCONNECT"
 
-# create a socket instance, specify IPv4 and TCP
-# TCP is needed because send files require acknoledgements 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# bind the address to the socket
-server.bind(ADDR)
+
 REQUESTNO = 0
 REQUESTSUCCESS = 0
 
@@ -38,15 +36,15 @@ def count_request(bool, lock, conn):
         else:
             requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
             conn.send(requestAmount.encode(FORMAT))
-    
+
 def handle_client(conn, addr, lock):
     connected = True
     global REQUESTNO
     global REQUESTSUCCESS
     filename = conn.recv(HEADER).decode(FORMAT)
     requestInfo = "REQ <{}>: File {} requested from {}".format(REQUESTNO,filename,addr)    
-    print(requestInfo)
-    
+    print(requestInfo)  
+
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
         if os.path.isfile(filename):
@@ -75,17 +73,22 @@ def handle_client(conn, addr, lock):
         
 
 def start():
+    # create a socket instance, specify IPv4 and TCP
+    # TCP is needed because send files require acknoledgements 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # bind the address to the socket
+    server.bind(ADDR)  
     server.listen()
-    while True:
-        # waiting for connection to server. saving information of connections
-        # such as port and address of the client
-
-        conn, addr = server.accept()
-        # create lock
-        lock = Lock()
-        # start the handling of threads
-        with ThreadPoolExecutor(max_workers=10) as executer:
-            result = executer.submit(handle_client, conn, addr, lock)
+    with ThreadPoolExecutor(max_workers=10) as executer:
+        while True:
+            # create lock
+            conn, addr = server.accept()
+            print(conn)
+            with conn:
+                # start the handling of threads     
+                lock = Lock()
+                result = executer.submit(handle_client, conn, addr, lock)
+                print(result)
 
 print("[STARTING]... Server is Starting. Please Wait")
 print(SERVER)
