@@ -1,16 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from ctypes import resize
 from genericpath import isfile
-from itertools import count
-import multiprocessing
-from sqlite3 import connect
 from threading import Lock
 import socket
 import time
 import os
 
 # Header to send how long the message is
-HEADER = 64
+HEADER = 1200
 # set port
 PORT = 5454
 
@@ -18,24 +14,29 @@ PORT = 5454
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8' 
-DC_MESSAGE = "!DISCONNECT"
-
-
 REQUESTNO = 0
 REQUESTSUCCESS = 0
 
 def count_request(bool, lock, conn):
     global REQUESTNO
     global REQUESTSUCCESS
-    with lock:
-        REQUESTNO += 1
-        if bool == True:
-            REQUESTSUCCESS += 1
-            requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
-            conn.send(requestAmount.encode(FORMAT))
-        else:
-            requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
-            conn.send(requestAmount.encode(FORMAT))
+    lock.acquire()
+    REQUESTNO += 1
+    if bool == True:
+        print(bool)
+        REQUESTSUCCESS += 1
+        requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
+        print(requestAmount)
+        conn.send(requestAmount.encode(FORMAT))
+        lock.release()
+        return 0
+    elif bool == False:
+        print("FALSE")
+        requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
+        conn.send(requestAmount.encode(FORMAT))
+        lock.release()
+        return 0
+
 
 def handle_client(conn, addr, lock):
     connected = True
@@ -43,17 +44,15 @@ def handle_client(conn, addr, lock):
     global REQUESTSUCCESS
     filename = conn.recv(HEADER).decode(FORMAT)
     requestInfo = "REQ <{}>: File {} requested from {}".format(REQUESTNO,filename,addr)    
-    print(requestInfo)  
-
+    print(requestInfo)
+    
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
         if os.path.isfile(filename):
             count_request(True, lock, conn)
             # open file
             f = open(filename, 'rb')
-            # read file
-            
-            
+            # read file          
             data = f.read(HEADER)
             
             while (data):
@@ -68,7 +67,7 @@ def handle_client(conn, addr, lock):
             print(f"REQ <{REQUESTNO}>: [Not] Successful")
             connected = False
             
-        print(f"REQ <{REQUESTNO}>: Total successful requests so far = {REQUESTSUCCESS}")
+    print(f"REQ <{REQUESTNO}>: Total successful requests so far = {REQUESTSUCCESS}")
     conn.close()
         
 
@@ -79,16 +78,15 @@ def start():
     # bind the address to the socket
     server.bind(ADDR)  
     server.listen()
+    lock = Lock()
     with ThreadPoolExecutor(max_workers=10) as executer:
         while True:
             # create lock
-            conn, addr = server.accept()
-            print(conn)
+            conn, addr = server.accept()            
             with conn:
                 # start the handling of threads     
-                lock = Lock()
                 result = executer.submit(handle_client, conn, addr, lock)
-                print(result)
+    
 
 print("[STARTING]... Server is Starting. Please Wait")
 print(SERVER)

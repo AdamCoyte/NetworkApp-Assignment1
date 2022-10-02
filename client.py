@@ -1,18 +1,15 @@
-from ast import arg
 import socket
 import sys
 import os
 
 
-HEADER = 64
+HEADER = 1200
 # set port
 PORT = 5454     
 # get host IP address of server
 SERVER = "192.168.0.127"
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
-DC_MESSAGE = "!DISCONNECT"
-SEPERATOR = "<SEPERATOR>"
 
 
 def download_file(file, ip, port):
@@ -20,10 +17,13 @@ def download_file(file, ip, port):
     client.connect(ADDR)
     client.send(file.encode(FORMAT))
     
+    
     RequestInfo = client.recv(HEADER)
-    print(RequestInfo.decode(FORMAT))
+    RequestInfo = RequestInfo.decode(FORMAT)
+    print(RequestInfo) 
     
     ResponseCheck = str(RequestInfo)
+    print(ResponseCheck)
     if "[not]" in ResponseCheck.split(" "):
         info = client.recv(HEADER)
         print(info.decode(FORMAT))  
@@ -38,7 +38,7 @@ def download_file(file, ip, port):
         filename.close()
     else:
         print("No Connection Found")
-    client.close()
+        client.close()
     
 def main(argv):
     ServerIP =  argv[1]
