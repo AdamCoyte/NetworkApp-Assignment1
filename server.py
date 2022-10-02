@@ -1,7 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 from genericpath import isfile
+from itertools import count
+import multiprocessing
+from threading import Lock
 import socket
-from sqlite3 import connect
 import time
 import os
 
@@ -24,56 +26,67 @@ server.bind(ADDR)
 REQUESTNO = 0
 REQUESTSUCCESS = 0
 
-
-def handle_client(conn, addr):
+def count_request(bool, lock, conn):
+    global REQUESTNO
+    global REQUESTSUCCESS
+    with lock:
+        REQUESTNO += 1
+        if bool == True:
+            REQUESTSUCCESS += 1
+            requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
+            conn.send(requestAmount.encode(FORMAT))
+        else:
+            requestAmount = "Server handled {} requests, {} requests were successful".format(REQUESTNO, REQUESTSUCCESS)
+            conn.send(requestAmount.encode(FORMAT))
+    
+def handle_client(conn, addr, lock):
     connected = True
     global REQUESTNO
     global REQUESTSUCCESS
-    totalRequests = REQUESTNO
-    successfullRequests = REQUESTSUCCESS
     filename = conn.recv(HEADER).decode(FORMAT)
-    print(f"REQ <{totalRequests}>: File {filename} requested from {addr}")
+    requestInfo = "REQ <{}>: File {} requested from {}".format(REQUESTNO,filename,addr)    
+    print(requestInfo)
+    
     while connected:
     # wait for message from client, use HEADER and FORMAT for receiving the message
-
         if os.path.isfile(filename):
+            count_request(True, lock, conn)
             # open file
             f = open(filename, 'rb')
             # read file
-            data = f.read(HEADER)
-            while (data):
-                print("This is data")
-                print(data)
-                conn.send(data)
-                data = f.read(HEADER)      
-            REQUESTSUCCESS += 1
-            successfullRequests += 1
-            f.close()
-        else:
-            conn.send("File {filename} [not] found at server.".encode(FORMAT))
-            print(f"REQ <{totalRequests}>: [Not] Successful")
-            print(f"REQ <{totalRequests}>File transfer complete")
             
-        print(f"REQ <{totalRequests}>: Total successful requests so far = {successfullRequests}")
-        REQUESTNO += 1
-        conn.close()
-        connected = False
-
-
+            
+            data = f.read(HEADER)
+            
+            while (data):
+                conn.send(data)
+                data = f.read(HEADER)    
+            print(f"REQ <{REQUESTNO}>: File transfer complete")
+            f.close()
+            connected = False
+        else:
+            conn.send(f"File {filename} [not] found at server.".encode(FORMAT))
+            count_request(False, lock, conn)
+            print(f"REQ <{REQUESTNO}>: [Not] Successful")
+            connected = False
+            
+        print(f"REQ <{REQUESTNO}>: Total successful requests so far = {REQUESTSUCCESS}")
+    conn.close()
+        
 
 def start():
     server.listen()
-    x = 0
     while True:
         # waiting for connection to server. saving information of connections
         # such as port and address of the client
 
         conn, addr = server.accept()
-        
+        # create lock
+        lock = Lock()
         # start the handling of threads
         with ThreadPoolExecutor(max_workers=10) as executer:
-            result = executer.submit(handle_client, conn, addr)
-          
+            result = executer.submit(handle_client, conn, addr, lock)
+
 print("[STARTING]... Server is Starting. Please Wait")
 print(SERVER)
 start()

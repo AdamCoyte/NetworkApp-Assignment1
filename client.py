@@ -15,18 +15,30 @@ DC_MESSAGE = "!DISCONNECT"
 SEPERATOR = "<SEPERATOR>"
 
 
-def send_file(file, ip, port):
+def download_file(file, ip, port):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     client.send(file.encode(FORMAT))
-    filename = open(file, 'wb')
-    fileData = client.recv(HEADER)
-    print(fileData)
-    while fileData:
-        filename.write(fileData)
+    
+    RequestInfo = client.recv(HEADER)
+    print(RequestInfo.decode(FORMAT))
+    
+    ResponseCheck = str(RequestInfo)
+    if "[not]" in ResponseCheck.split(" "):
+        info = client.recv(HEADER)
+        print(info.decode(FORMAT))
+    
+    else:
+        filename = open(file, 'wb')          
         fileData = client.recv(HEADER)
-    filename.close()
-    client.close()
+        print(f"Downloading file {file}")
+        while fileData:
+            filename.write(fileData)
+            fileData = client.recv(HEADER)
+        print("Download Complete")
+        filename.close()
+        client.close()
+    
 def main(argv):
     ServerIP =  argv[1]
     # print(ServerIP)
@@ -34,6 +46,6 @@ def main(argv):
     # print(ServerPort)
     filename = str(argv[3])
     # print(filename)
-    send_file(filename, ServerIP, ServerPort)
+    download_file(filename, ServerIP, ServerPort)
 
 main(sys.argv)
